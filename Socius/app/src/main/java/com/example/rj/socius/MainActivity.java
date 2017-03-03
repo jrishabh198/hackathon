@@ -1,12 +1,16 @@
 package com.example.rj.socius;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,12 +18,18 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.net.NetworkInterface;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,14 +53,56 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 //                WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 //                wifi.setWifiEnabled(true);
-                getConnectedDevicesMac();
+//                getConnectedDevicesMac();
+
+
+                Intent callIntent = new Intent(Intent.ACTION_CALL);
+                callIntent.setData(Uri.parse("tel:09693408611"));
+
+                if (ActivityCompat.checkSelfPermission(MainActivity.this,
+                        Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                startActivity(callIntent);
             }
-        });
+
+            });
 
         disableButton.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
-                WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                wifi.setWifiEnabled(false);
+//                WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+//                wifi.setWifiEnabled(false);
+
+                Thread t = new Thread(){
+
+                    @Override
+                    public void run() {
+                        try {
+                            Socket s = new Socket("192.168.137.167", 7000);
+                            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+                            dos.writeUTF("hello1");
+
+                            //read input stream
+                            DataInputStream dis2 = new DataInputStream(s.getInputStream());
+                            InputStreamReader disR2 = new InputStreamReader(dis2);
+                            BufferedReader br = new BufferedReader(disR2);//create a BufferReader object for input
+
+                            //print the input to the application screen
+//                            final TextView receivedMsg = (TextView) findViewById(R.id.textView2);
+//                            receivedMsg.setText(br.toString());
+                            Log.v("Server_se",br.toString());
+
+                            dis2.close();
+                            s.close();
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                };
+                t.start();
+                Toast.makeText(getApplicationContext(), "The message has been sent", Toast.LENGTH_SHORT).show();
+
             }
         });
 
@@ -90,10 +142,10 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(this.getClass().toString(), "", e);
             }
         }});
-        mWifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        registerReceiver(mWifiScanReceiver,
-                new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-        mWifiManager.startScan();
+//        mWifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+//        registerReceiver(mWifiScanReceiver,
+//                new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+//        mWifiManager.startScan();
 
 
 
